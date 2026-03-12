@@ -17,7 +17,7 @@ app.use(express.static('Frontend'));
 
 // Routes API
 app.use('/api/analysis', require('./src/routes/analysis'));
-app.use('/api/predictions', require('./src/routes/Prediction'));
+app.use('/api/predictions', require('./src/routes/prediction'));
 app.use('/api/fixtures', require('./src/routes/fixtures'));
 app.use('/api/teams', require('./src/routes/teams'));
 
@@ -27,7 +27,7 @@ const PORT = process.env.PORT || 10000;
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`[Ultra-Scanner] 🚀 Server running on port ${PORT}`);
-    
+
     // Initialisation du cache après le démarrage
     if (teamController && typeof teamController.initializeTeamsCache === 'function') {
         teamController.initializeTeamsCache()
