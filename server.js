@@ -17,7 +17,6 @@ app.use(express.static('Frontend'));
 
 // Routes API
 app.use('/api/analysis', require('./src/routes/analysis'));
-app.use('/api/predictions', require('./src/routes/predictions'));
 app.use('/api/fixtures', require('./src/routes/fixtures'));
 app.use('/api/teams', require('./src/routes/teams'));
 

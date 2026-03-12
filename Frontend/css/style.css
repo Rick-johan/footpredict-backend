@@ -1,0 +1,98 @@
+/* Custom animations and styling over Tailwind */
+
+.tab-btn.active {
+    border-color: #6366f1;
+    color: #6366f1;
+    text-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+}
+
+.tab-btn.inactive {
+    border-color: transparent;
+    color: #64748b;
+}
+
+.tab-btn:hover:not(.active) {
+    color: #cbd5e1;
+}
+
+/* Smooth Accordion */
+.accordion-wrapper {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+.accordion-wrapper.collapsed {
+    grid-template-rows: 0fr;
+    opacity: 0;
+}
+
+.accordion-inner {
+    overflow: hidden;
+}
+
+/* Modal Animations */
+#modalBackdrop {
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+}
+
+#modalBackdrop.show {
+    opacity: 1;
+}
+
+#modalPanel {
+    transform: scale(0.95);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#modalPanel.show {
+    transform: scale(1);
+    opacity: 1;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(99, 102, 241, 0.5);
+    /* Neon hover */
+}
+
+/* Premium Animated Text Gradient */
+.text-gradient {
+    background: linear-gradient(135deg, #6366f1 0%, #0ea5e9 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-size: 200% auto;
+    animation: gradientShift 3s ease infinite;
+}
+
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}

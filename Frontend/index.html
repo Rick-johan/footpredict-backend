@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FootPredict UI - Ultra Scanner</title>
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate_background: '#09090b', // Deep Premium Dark
+                        slate_card: '#18181b',     // Premium Card
+                        slate_text: '#f8fafc',     // Ice White
+                        accent_gold: '#6366f1',    // Neon Indigo
+                        // Compatibility variables
+                        sofa_bg: '#09090b',
+                        sofa_card: '#111115',
+                        sofa_text: '#f8fafc',
+                        sofa_text_muted: '#94a3b8',
+                        sofa_blue: '#6366f1', // Indigo-500
+                        sofa_blue_light: '#0ea5e9', // Sky-500
+                        sofa_border: '#27272a'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="bg-sofa_bg text-sofa_text font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header
+        class="sticky top-0 z-50 w-full backdrop-blur-xl flex-none transition-all duration-500 border-b border-white/5 bg-sofa_bg/70 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+        <div class="max-w-[1700px] mx-auto px-4 sm:px-6 md:px-8 py-3 flex items-center justify-between gap-4">
+
+            <!-- Logo & Mobile Menu -->
+            <div class="flex items-center gap-3 shrink-0">
+                <button id="mobileMenuBtn" class="md:hidden text-white hover:text-sofa_blue_light transition-colors">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+                <a class="flex items-center gap-2 mr-3 font-bold text-lg md:text-xl tracked-tight" href="#">
+                    <i data-lucide="cpu" class="text-sofa_blue_light"></i>
+                    <span class="text-white hidden md:inline">FootPredict <span
+                            class="text-sofa_blue_light">Pro</span></span>
+                </a>
+            </div>
+
+            <!-- Header Global Search (Betclic Style) -->
+            <div
+                class="flex-1 max-w-2xl hidden md:flex items-center gap-2 bg-slate-800/50 outline outline-1 outline-white/10 rounded-full px-2 py-1.5 shadow-inner">
+                <div class="flex-1 relative">
+                    <i data-lucide="shield-half"
+                        class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400"></i>
+                    <input type="text" id="homeTeamSearch" placeholder="Équipe Domicile..."
+                        class="w-full bg-transparent text-sm font-medium pl-9 pr-2 py-1 text-white focus:outline-none placeholder:text-slate-500"
+                        autocomplete="off">
+                    <div id="homeTeamDropdown"
+                        class="absolute left-0 w-[250px] mt-3 bg-[#18181b]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.8)] overflow-hidden hidden max-h-48 overflow-y-auto z-40">
+                    </div>
+                </div>
+
+                <span class="text-[10px] font-black italic text-slate-500 px-1">VS</span>
+
+                <div class="flex-1 relative">
+                    <i data-lucide="shield"
+                        class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400"></i>
+                    <input type="text" id="awayTeamSearch" placeholder="Équipe Extérieur..."
+                        class="w-full bg-transparent text-sm font-medium pl-9 pr-2 py-1 text-white focus:outline-none placeholder:text-slate-500"
+                        autocomplete="off">
+                    <div id="awayTeamDropdown"
+                        class="absolute left-0 w-[250px] mt-3 bg-[#18181b]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.8)] overflow-hidden hidden max-h-48 overflow-y-auto z-40">
+                    </div>
+                </div>
+
+                <button id="scanDuelBtn" disabled
+                    class="bg-sofa_blue_light text-white w-8 h-8 rounded-full flex items-center justify-center shrink-0 hover:bg-sofa_blue transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i data-lucide="search" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Date Picker -->
+            <div class="flex items-center shrink-0">
+                <div class="flex items-center gap-2 bg-slate-800 rounded-lg px-3 py-1.5 border border-slate-700">
+                    <i data-lucide="calendar" class="w-4 h-4 text-sofa_blue_light"></i>
+                    <input type="date" id="dateSelector"
+                        class="bg-transparent text-sm font-medium text-white focus:outline-none cursor-pointer w-[110px]">
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Layout Wrapper (3 Columns Grid on xl Desktop, smaller scale on md/lg) -->
+    <div
+        class="flex-1 max-w-[1700px] w-full mx-auto px-4 sm:px-6 md:px-8 py-8 grid grid-cols-1 md:grid-cols-[200px_1fr_250px] lg:grid-cols-[240px_1fr_300px] xl:grid-cols-[280px_1fr_320px] items-start gap-4 xl:gap-6 relative">
+
+        <!-- Mobile Sidebar Overlay -->
+        <div id="sidebarOverlay"
+            class="fixed inset-0 bg-black/80 z-[60] hidden md:hidden backdrop-blur-sm transition-opacity opacity-0">
+        </div>
+
+        <!-- Sidebar Navigation (Hidden on Mobile, Sticky on MD/LG/XL) -->
+        <aside
+            class="fixed inset-y-0 left-0 z-[70] w-72 md:w-full transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out md:static shrink-0 md:sticky md:top-24 h-[100dvh] md:h-[calc(100vh-8rem)] overflow-hidden flex flex-col bg-sofa_bg md:bg-transparent border-r border-white/10 md:border-0"
+            id="mainSidebar">
+
+            <!-- Mobile Close Button -->
+            <div class="md:hidden flex justify-end p-4 border-b border-white/5 shrink-0">
+                <button id="closeSidebarBtn" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div
+                class="bg-sofa_card/60 backdrop-blur-md border border-white/5 md:rounded-2xl p-4 shadow-[0_4px_30px_rgba(0,0,0,0.5)] flex-1 flex flex-col overflow-hidden min-h-0 pb-20 md:pb-4">
+                <!-- Top Competitions Section -->
+                <h3
+                    class="text-[11px] text-[#94a3b8] font-bold mb-3 uppercase tracking-wider flex items-center gap-2 shrink-0">
+                    <i data-lucide="star" class="w-3.5 h-3.5 text-accent_gold"></i>
+                    Compétitions Phares
+                </h3>
+                <ul class="space-y-0.5 mb-6 shrink-0 max-h-[35vh] overflow-y-auto overscroll-none scrollbar-thin scrollbar-thumb-white/10 pr-1"
+                    id="topCompetitionsList"
+                    style="scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;">
+                    <!-- Populated by JS -->
+                    <li class="py-2 text-center text-xs text-slate-500">Chargement...</li>
+                </ul>
+
+                <!-- All Countries Section -->
+                <h3
+                    class="text-[11px] text-[#94a3b8] font-bold mb-3 uppercase tracking-wider flex items-center gap-2 shrink-0">
+                    <i data-lucide="globe-2" class="w-3.5 h-3.5 text-sofa_blue_light"></i>
+                    Football par Pays
+                </h3>
+                <div class="space-y-0.5 overflow-y-auto overscroll-none scrollbar-thin scrollbar-thumb-white/10 pr-2 flex-1 pb-4"
+                    id="countriesAccordion"
+                    style="scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;">
+                    <!-- Populated by JS -->
+                    <div class="py-2 text-center text-xs text-slate-500">Chargement...</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Column (Center) -->
+        <main class="min-w-0" id="mainContentArea">
+            <!-- Mobile Only Search Bar (Since Header Search is hidden on small screens) -->
+            <div
+                class="md:hidden flex flex-col gap-2 bg-slate-800/50 outline outline-1 outline-white/10 rounded-xl p-3 mb-6 shadow-inner relative">
+                <div class="flex items-center relative">
+                    <i data-lucide="shield-half" class="absolute left-3 w-4 h-4 text-slate-400"></i>
+                    <input type="text" id="mobileHomeTeamSearch" placeholder="Équipe Domicile..."
+                        class="w-full bg-[#18181b] rounded-lg text-sm pl-9 pr-2 py-2 text-white focus:outline-none">
+                </div>
+                <div class="flex items-center relative">
+                    <i data-lucide="shield" class="absolute left-3 w-4 h-4 text-slate-400"></i>
+                    <input type="text" id="mobileAwayTeamSearch" placeholder="Équipe Extérieur..."
+                        class="w-full bg-[#18181b] rounded-lg text-sm pl-9 pr-2 py-2 text-white focus:outline-none">
+                </div>
+                <button id="mobileScanDuelBtn" disabled
+                    class="bg-sofa_blue_light text-white w-full rounded-lg py-2 font-bold flex items-center justify-center gap-2 mt-1 hover:bg-sofa_blue transition-colors disabled:opacity-50">
+                    <i data-lucide="search" class="w-4 h-4"></i> Scanner
+                </button>
+            </div>
+
+            <div class="flex justify-between items-center mb-6 relative z-10">
+                <h1 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+                    <i data-lucide="trophy" class="w-6 h-6 text-sofa_blue_light"></i>
+                    <span id="mainPageTitle">Matchs du Jour</span>
+                    <span id="matchCount"
+                        class="text-sm bg-slate-800 text-slate-300 font-mono px-2 py-1 rounded border border-slate-700 ml-2">...</span>
+                </h1>
+            </div>
+
+            <!-- Match Status Filters -->
+            <div id="statusFilters" class="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-none relative z-10">
+                <button
+                    class="status-btn active px-4 py-1.5 rounded-full text-sm font-bold bg-slate-700 text-white whitespace-nowrap transition-colors"
+                    data-status="all">
+                    Tous
+                </button>
+                <button
+                    class="status-btn px-4 py-1.5 rounded-full text-sm font-bold bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white whitespace-nowrap transition-colors flex items-center gap-2"
+                    data-status="live">
+                    <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> En Direct
+                </button>
+                <button
+                    class="status-btn px-4 py-1.5 rounded-full text-sm font-bold bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white whitespace-nowrap transition-colors"
+                    data-status="finished">
+                    Terminés
+                </button>
+            </div>
+
+            <!-- Dashboard Container (MATCHES) -->
+            <div id="dashboardContainer" class="space-y-4">
+                <!-- Initial Loader -->
+                <div class="flex justify-center py-20">
+                    <i data-lucide="loader-2" class="w-10 h-10 animate-spin text-sofa_blue_light"></i>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Right Column: History / Bet Slip (Sticky) -->
+        <aside
+            class="w-full md:w-[250px] lg:w-[300px] xl:w-[320px] shrink-0 md:sticky md:top-24 md:h-[calc(100vh-8rem)] flex flex-col gap-4"
+            id="historyContainer">
+            <!-- Global Stats Banner (Vertical for Column) -->
+            <div class="bg-sofa_card/80 backdrop-blur-md border border-white/5 rounded-2xl p-4 shadow-lg shrink-0">
+                <div class="mb-4 text-center">
+                    <h3 class="text-white font-bold text-sm flex items-center justify-center gap-2 mb-2">
+                        <i data-lucide="database" class="w-4 h-4 text-sofa_blue_light"></i>
+                        Historique des Analyses
+                    </h3>
+
+                    <!-- History Rubriques Tabs -->
+                    <div class="flex bg-slate-800 rounded-lg p-1 border border-slate-700 w-full mt-3 gap-0.5">
+                        <button id="historyCompletedBtn"
+                            class="flex-1 px-1 py-1.5 rounded-md bg-slate-700 text-white font-bold text-[10px] transition-colors">
+                            Terminés
+                        </button>
+                        <button id="historyPendingBtn"
+                            class="flex-1 px-1 py-1.5 rounded-md text-slate-400 hover:text-white font-bold text-[10px] transition-colors relative">
+                            En Cours
+                            <span id="historyPendingBadge" class="absolute -top-1 -right-1 flex h-3 w-3 hidden">
+                                <span
+                                    class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                            </span>
+                        </button>
+                        <button id="historyNotStartedBtn"
+                            class="flex-1 px-1 py-1.5 rounded-md text-slate-400 hover:text-white font-bold text-[10px] transition-colors">
+                            À Venir
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div class="bg-slate-800/50 rounded p-2 border border-slate-700/50">
+                        <span class="text-[9px] text-slate-400 block uppercase font-bold">Total</span>
+                        <span id="historyTotalCount" class="text-sm font-black text-white">0</span>
+                    </div>
+                    <div class="bg-green-900/20 rounded p-2 border border-green-900/50">
+                        <span class="text-[9px] text-green-400 block uppercase font-bold">Succès</span>
+                        <span id="globalWinrateUI" class="text-sm font-black text-green-400">-%</span>
+                    </div>
+                    <div class="bg-red-900/20 rounded p-2 border border-red-900/50">
+                        <span class="text-[9px] text-red-400 block uppercase font-bold">Échec</span>
+                        <span id="globalLossrateUI" class="text-sm font-black text-red-500">-%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- List of archived predictions -->
+            <div id="historyListContainer"
+                class="flex-1 overflow-y-auto overscroll-none pr-1 space-y-3 scrollbar-thin scrollbar-thumb-white/10"
+                style="scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;">
+                <!-- Injected via JS -->
+                <div class="flex w-full justify-center py-10">
+                    <i data-lucide="loader-2" class="w-6 h-6 animate-spin text-slate-500"></i>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+
+    <!-- Modal Analyse IA -->
+    <div id="analysisModal" class="fixed inset-0 z-[100] hidden" aria-labelledby="modal-title" role="dialog"
+        aria-modal="true">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 bg-sofa_bg/80 backdrop-blur-sm transition-opacity" aria-hidden="true"
+            id="modalBackdrop"></div>
+
+        <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <!-- Modal panel -->
+                <div class="relative transform overflow-hidden rounded-2xl bg-[#18181b]/90 backdrop-blur-2xl text-left shadow-[0_0_50px_rgba(0,0,0,0.8)] transition-all sm:my-8 sm:w-full sm:max-w-4xl border border-white/10 opacity-0 scale-95 duration-300 ease-out"
+                    id="modalPanel">
+
+                    <!-- Header Modal -->
+                    <div class="bg-black/20 px-6 py-4 border-b border-white/5 flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="brain-circuit" class="w-6 h-6 text-sofa_blue_light"></i>
+                            <h3 class="text-lg font-semibold text-white" id="modalTitle">Système d'Analyse</h3>
+                        </div>
+                        <button type="button" id="closeModalBtn" class="text-slate- hover:text-white transition-colors">
+                            <i data-lucide="x" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+
+                    <!-- Modal Body -->
+                    <div class="px-6 py-6" id="modalBody">
+                        <!-- Skeleton Loading State -->
+                        <div id="modalSkeleton" class="space-y-6">
+                            <div class="flex justify-center items-center gap-8 py-4">
+                                <div class="w-16 h-16 rounded-full bg-white/10 animate-pulse"></div>
+                                <div class="h-8 w-12 bg-white/10 rounded animate-pulse"></div>
+                                <div class="w-16 h-16 rounded-full bg-white/10 animate-pulse"></div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="h-32 bg-white/5 rounded-xl border border-white/5 animate-pulse"></div>
+                                <div class="h-32 bg-white/5 rounded-xl border border-white/5 animate-pulse"></div>
+                                <div class="h-32 bg-white/5 rounded-xl border border-white/5 animate-pulse"></div>
+                                <div class="h-32 bg-white/5 rounded-xl border border-white/5 animate-pulse"></div>
+                            </div>
+                        </div>
+
+                        <!-- Real Content State -->
+                        <div id="modalContent" class="hidden">
+
+                            <!-- Live Alert Banner (Injected via JS if true) -->
+                            <div id="liveAlertBanner"
+                                class="hidden bg-red-900/40 border-2 border-red-500 text-red-400 px-4 py-3 rounded-xl mb-6 mx-4 flex items-center gap-4 animate-pulse shadow-[0_0_15px_rgba(220,38,38,0.3)]">
+                                <i data-lucide="radio" class="w-8 h-8 shrink-0"></i>
+                                <div>
+                                    <strong class="block text-sm font-black tracking-wide">ANALYSE EN DIRECT
+                                        AJUSTÉE</strong>
+                                    <span id="liveAlertMinuteText" class="text-xs opacity-90 font-medium">Les paramètres
+                                        analytiques prennent en compte la
+                                        minute, le score et la dynamique actuelle du match.</span>
+                                </div>
+                            </div>
+
+                            <!-- Match Header -->
+                            <div
+                                class="flex justify-center items-center gap-6 mb-8 bg-white/5 backdrop-blur-sm p-5 rounded-2xl border border-white/5 shadow-inner">
+                                <div class="text-center w-1/3">
+                                    <img id="mHomeLogo" src="" alt="Home"
+                                        class="w-16 h-16 mx-auto mb-3 object-contain drop-shadow-lg">
+                                    <p id="mHomeName" class="font-bold text-white uppercase text-sm"></p>
+                                </div>
+                                <div class="text-center flex flex-col items-center">
+                                    <span class="text-xs text-slate-400 mb-2 font-medium" id="mLeague"></span>
+                                    <span
+                                        class="bg-black/40 text-xs px-3 py-1.5 rounded-md font-mono text-white border border-white/10 mb-2 shadow-inner"
+                                        id="mDate"></span>
+                                    <span class="text-xl font-black text-white/50">VS</span>
+                                </div>
+                                <div class="text-center w-1/3">
+                                    <img id="mAwayLogo" src="" alt="Away"
+                                        class="w-16 h-16 mx-auto mb-3 object-contain drop-shadow-lg">
+                                    <p id="mAwayName" class="font-bold text-white uppercase text-sm"></p>
+                                </div>
+                            </div>
+
+                            <!-- Tabs Header -->
+                            <div class="border-b border-white/10 mb-6">
+                                <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                                    <button
+                                        class="tab-btn active whitespace-nowrap border-b-2 py-4 px-1 text-sm font-bold transition-all"
+                                        data-target="tab-predictions">
+                                        Pronostics
+                                    </button>
+                                    <button
+                                        class="tab-btn inactive whitespace-nowrap border-b-2 py-4 px-1 text-sm font-bold transition-all"
+                                        data-target="tab-context">
+                                        Données & Contexte
+                                    </button>
+                                </nav>
+                            </div>
+
+                            <!-- IA Speech (Always visible or in Predictions Tab) -->
+                            <div id="aiSpeechContainer"
+                                class="bg-sofa_blue/10 backdrop-blur-md border border-sofa_blue/20 rounded-2xl p-5 mb-6 shadow-lg border-l-4 border-l-sofa_blue">
+                                <div class="flex gap-4 items-start">
+                                    <div class="bg-sofa_blue/20 p-2 rounded-lg shrink-0">
+                                        <i data-lucide="bot" class="w-5 h-5 text-sofa_blue_light"></i>
+                                    </div>
+                                    <p id="aiSpeechText"
+                                        class="text-slate-200 text-sm leading-relaxed font-medium pt-1">
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Tab 1: Predictions -->
+                            <div id="tab-predictions" class="tab-content block">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="predictionsContainer">
+                                    <!-- Injected via JS -->
+                                </div>
+                            </div>
+
+                            <!-- Tab 2: Context -->
+                            <div id="tab-context" class="tab-content hidden space-y-6">
+                                <!-- EnjeuScore Gauge -->
+                                <div
+                                    class="bg-white/5 backdrop-blur-md p-5 rounded-2xl border border-white/5 shadow-inner">
+                                    <h4
+                                        class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                        <i data-lucide="gauge" class="w-4 h-4 text-sofa_blue_light"></i> Pression &
+                                        EnjeuScore
+                                    </h4>
+                                    <p class="text-sm text-slate-400 mb-4 italic" id="ctxNarrative"></p>
+
+                                    <div class="space-y-4">
+                                        <div>
+                                            <div class="flex justify-between text-xs mb-1">
+                                                <span class="text-white" id="ctxHomeName">DOM:</span>
+                                                <span class="font-mono text-sofa_blue_light" id="ctxHomeScore"></span>
+                                            </div>
+                                            <div class="w-full bg-slate- rounded-full h-2">
+                                                <div class="bg-blue-500 h-2 rounded-full transition-all duration-1000"
+                                                    id="ctxHomeBar" style="width: 0%"></div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="flex justify-between text-xs mb-1">
+                                                <span class="text-white" id="ctxAwayName">EXT:</span>
+                                                <span class="font-mono text-sofa_blue_light" id="ctxAwayScore"></span>
+                                            </div>
+                                            <div class="w-full bg-slate- rounded-full h-2">
+                                                <div class="bg-red-500 h-2 rounded-full transition-all duration-1000"
+                                                    id="ctxAwayBar" style="width: 0%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Mirror Scan Report -->
+                                <div
+                                    class="bg-white/5 backdrop-blur-md p-5 rounded-2xl border border-white/5 shadow-inner">
+                                    <h4
+                                        class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                        <i data-lucide="scan-line" class="w-4 h-4 text-purple-400"></i> Scan Miroir
+                                        (Stats)
+                                    </h4>
+                                    <p class="text-sm text-slate-400 font-mono bg-black/20 p-3 rounded-lg border border-white/5 shadow-inner"
+                                        id="ctxMirror">
+                                    </p>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Custom Delete Confirmation Modal -->
+    <div id="deleteConfirmModal" class="fixed inset-0 z-[150] hidden items-center justify-center px-4">
+        <div id="deleteConfirmBackdrop"
+            class="absolute inset-0 bg-[#0a0a0c]/80 backdrop-blur-md transition-opacity duration-300 opacity-0"></div>
+        <div id="deleteConfirmPanel"
+            class="relative bg-[#18181b]/95 backdrop-blur-2xl border border-white/10 p-8 rounded-[2rem] w-full max-w-[360px] shadow-[0_20px_70px_rgba(0,0,0,0.8)] flex flex-col items-center text-center transform scale-95 opacity-0 transition-all duration-300">
+
+            <!-- Glow effect behind icon -->
+            <div class="absolute top-8 w-24 h-24 bg-red-500/15 rounded-full blur-2xl"></div>
+
+            <div
+                class="relative w-16 h-16 rounded-[1.25rem] bg-gradient-to-br from-red-500/20 to-red-900/10 flex items-center justify-center mb-6 border border-red-500/30 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
+                <i data-lucide="trash-2" class="w-8 h-8 text-red-500"></i>
+            </div>
+
+            <h3 class="text-xl md:text-2xl font-black text-white mb-3">Supprimer l'archive</h3>
+            <p class="text-slate-400 text-sm mb-8 leading-relaxed">Êtes-vous sûr ? Cette action est <span
+                    class="text-red-400 font-bold">définitive</span> et l'analyse sera effacée des serveurs.</p>
+
+            <div class="flex gap-3 w-full">
+                <button id="cancelDeleteBtn"
+                    class="flex-1 px-4 py-3 rounded-2xl bg-[#252525] hover:bg-[#333333] text-slate-300 hover:text-white font-bold text-[13px] tracking-wide transition-all border border-white/5">
+                    Annuler
+                </button>
+                <button id="confirmDeleteBtn"
+                    class="flex-1 px-4 py-3 rounded-2xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-[13px] tracking-wide transition-all shadow-[0_0_20px_rgba(220,38,38,0.3)] flex justify-center items-center relative overflow-hidden group">
+                    <span
+                        class="absolute inset-0 w-full h-full bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-500 ease-out"></span>
+                    <span class="relative z-10 flex items-center gap-2">Confirmer</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Application -->
+    <script src="js/app.v8.js"></script>
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>
