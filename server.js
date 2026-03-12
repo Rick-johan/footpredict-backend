@@ -23,11 +23,15 @@ app.use('/api/teams', require('./src/routes/teams'));
 
 const teamController = require('./src/controllers/teamController');
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 10000;
 
-app.listen(PORT, async () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`[Ultra-Scanner] 🚀 Server running on port ${PORT}`);
-
-    // Charger le cache des équipes en mémoire pour l'autocomplétion globale
-    await teamController.initializeTeamsCache();
+    
+    // Initialisation du cache après le démarrage
+    if (teamController && typeof teamController.initializeTeamsCache === 'function') {
+        teamController.initializeTeamsCache()
+            .then(() => console.log("[Ultra-Scanner] ✅ Teams cache initialized"))
+            .catch(err => console.error("[Ultra-Scanner] ❌ Cache error:", err));
+    }
 });
